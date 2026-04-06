@@ -1,0 +1,7 @@
+.DS_Store
+xcuserdata/
+DerivedData/
+build/
+*.xcuserstate
+# Optional: keep client ID out of git
+# AlbumToVideo/GoogleOAuthConfig.plist
