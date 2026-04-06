@@ -31,8 +31,18 @@ actor GoogleOAuthService {
             throw URLError(.badURL)
         }
 
-        let holder = OAuthWebSessionHolder(window: presentingWindow)
-        let callbackURL = try await holder.start(url: authURL, callbackScheme: config.callbackURLScheme)
+        let callbackURL: URL
+        if config.usesLoopbackRedirect {
+            callbackURL = try await OAuthLoopbackReceiver.run(authURL: authURL, redirectURI: config.redirectURI)
+        } else {
+            guard let scheme = config.callbackURLScheme, !scheme.isEmpty else {
+                throw NSError(domain: "AlbumToVideo", code: 5, userInfo: [
+                    NSLocalizedDescriptionKey: "CALLBACK_URL_SCHEME is required when not using a loopback REDIRECT_URI."
+                ])
+            }
+            let holder = OAuthWebSessionHolder(window: presentingWindow)
+            callbackURL = try await holder.start(url: authURL, callbackScheme: scheme)
+        }
 
         guard let items = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?.queryItems,
               let code = items.first(where: { $0.name == "code" })?.value

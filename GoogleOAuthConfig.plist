@@ -5,8 +5,8 @@
 	<key>CLIENT_ID</key>
 	<string>123456789-abcdef.apps.googleusercontent.com</string>
 	<key>REDIRECT_URI</key>
-	<string>http://127.0.0.1:8742/oauth2callback</string>
+	<string>com.albumtovideo.oauth:/oauth2callback</string>
 	<key>CALLBACK_URL_SCHEME</key>
-	<string></string>
+	<string>com.albumtovideo.oauth</string>
 </dict>
 </plist>

@@ -16,17 +16,23 @@ Google removed broad library access for new integrations after **31 March 2025**
 
 ## Google Cloud setup
 
-1. Open [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **Enable APIs** → enable **Photos Picker API**.  
-2. **Credentials** → **Create credentials** → **OAuth client ID** → type **Desktop app** (or a type that allows custom redirect URIs).  
-3. Under **Authorized redirect URIs**, add exactly:  
-   `com.albumtovideo.oauth:/oauth2callback`  
-4. Copy the **Client ID** string.
+Use an OAuth client type **Desktop app** and a **loopback** redirect. Do **not** use application type **Web application** with `com.albumtovideo.oauth:…` for Google Photos: sensitive scopes require **https** redirects on Web clients, so that combination is rejected in the console.
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **Library** → enable **Photos Picker API**.  
+2. **APIs & Services** → **OAuth consent screen** → add scope `…/auth/photospicker.mediaitems.readonly` (and your test user if the app is in Testing).  
+3. **APIs & Services** → **Credentials** → **Create credentials** → **OAuth client ID** → application type **Desktop app**.  
+4. **Authorized redirect URIs** (on the Desktop client — use the classic **Credentials** page, not only the newer “Google Auth Platform” UI if the field is missing there): add **exactly**  
+   `http://127.0.0.1:8742/oauth2callback`  
+5. Copy the **Client ID** into the app plist (below). You do **not** need the client secret in the app.
+
+If port **8742** is already in use on your Mac, pick another port and use the **same** URI in both Google Cloud and `GoogleOAuthConfig.plist` (e.g. `http://127.0.0.1:8743/oauth2callback`).
 
 ## Configure the app
 
-1. Edit `AlbumToVideo/GoogleOAuthConfig.plist` (or copy from `GoogleOAuthConfig.example.plist`).  
-2. Set **CLIENT_ID** to your OAuth client ID.  
-3. Keep **REDIRECT_URI** and **CALLBACK_URL_SCHEME** aligned with what you registered (defaults match `Info.plist` URL scheme `com.albumtovideo.oauth`).
+1. Edit `AlbumToVideo/GoogleOAuthConfig.plist` (see `GoogleOAuthConfig.example.plist`).  
+2. Set **CLIENT_ID** to your Desktop client’s ID.  
+3. Default **REDIRECT_URI** is `http://127.0.0.1:8742/oauth2callback` — it must match Google Cloud **character for character**.  
+4. Leave **CALLBACK_URL_SCHEME** empty for loopback. (Only set a custom URL scheme if you use a non-loopback redirect and register it in `Info.plist`.)
 
 ## Run
 
@@ -36,7 +42,7 @@ Google removed broad library access for new integrations after **31 March 2025**
 
 ## Usage
 
-1. **Sign in with Google** — browser sheet, PKCE, tokens stored in the **Keychain**.  
+1. **Sign in with Google** — the app briefly listens on **127.0.0.1:8742**, opens the system browser for Google sign-in, then receives the OAuth redirect locally (PKCE; tokens in **Keychain**).  
 2. **Pick photos in Google Photos…** — creates a picker session and opens Google’s site. Choose photos (e.g. open an album, select all you want), then finish. The app polls until your selection is ready, then downloads originals (photos only; videos are skipped for the slideshow pipeline).  
 3. **Or import folder of images…** — bypasses Google entirely for local testing or exported albums.  
 4. Optionally **Choose audio file…** (MP3, M4A, WAV, AIFF, etc.).  
@@ -46,6 +52,7 @@ Google removed broad library access for new integrations after **31 March 2025**
 ## Project layout
 
 - `Services/GoogleOAuthService.swift` — OAuth 2.0 + PKCE, refresh tokens.  
+- `Services/OAuthLoopbackReceiver.swift` — loopback redirect for Desktop OAuth + sensitive scopes.  
 - `Services/GooglePhotosPickerClient.swift` — Picker sessions + listing picked items.  
 - `Services/PickedMediaDownloader.swift` — Authorized downloads from `baseUrl`.  
 - `Services/SlideshowExporter.swift` — `AVAssetWriter` slideshow + optional audio mux.  
