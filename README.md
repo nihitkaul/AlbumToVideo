@@ -21,17 +21,16 @@ Use an OAuth client type **Desktop app** and a **loopback** redirect. Do **not**
 1. Open [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **Library** → enable **Photos Picker API**.  
 2. **APIs & Services** → **OAuth consent screen** → add scope `…/auth/photospicker.mediaitems.readonly` (and your test user if the app is in Testing).  
 3. **APIs & Services** → **Credentials** → **Create credentials** → **OAuth client ID** → application type **Desktop app**.  
-4. **Authorized redirect URIs** (on the Desktop client — use the classic **Credentials** page, not only the newer “Google Auth Platform” UI if the field is missing there): add **exactly**  
-   `http://127.0.0.1:8742/oauth2callback`  
-5. Copy the **Client ID** into the app plist (below). You do **not** need the client secret in the app.
+4. **You do not add redirect URIs for a Desktop client.** Google’s console is built that way: for desktop apps it does *not* ask for authorized redirect URIs; [Google’s own help](https://support.google.com/cloud/answer/15549257) says *“The console does not require any additional information to create OAuth 2.0 credentials for desktop applications.”* Loopback URLs like `http://127.0.0.1:PORT/...` are part of the [native / desktop OAuth flow](https://developers.google.com/identity/protocols/oauth2/native-app) and work with your **Desktop** client ID without registering them anywhere.  
+5. Copy the **Client ID** into the app plist (below). You do **not** put the client secret in the app.
 
-If port **8742** is already in use on your Mac, pick another port and use the **same** URI in both Google Cloud and `GoogleOAuthConfig.plist` (e.g. `http://127.0.0.1:8743/oauth2callback`).
+If you see **`redirect_uri_mismatch`**, double-check that **CLIENT_ID** is from a **Desktop** client (not Web), and that you didn’t typo **REDIRECT_URI** in `GoogleOAuthConfig.plist`. If port **8742** is in use, change **REDIRECT_URI** to another port (e.g. `http://127.0.0.1:8743/oauth2callback`) in the plist only — still no URI field in Cloud Console for Desktop.
 
 ## Configure the app
 
 1. Edit `AlbumToVideo/GoogleOAuthConfig.plist` (see `GoogleOAuthConfig.example.plist`).  
 2. Set **CLIENT_ID** to your Desktop client’s ID.  
-3. Default **REDIRECT_URI** is `http://127.0.0.1:8742/oauth2callback` — it must match Google Cloud **character for character**.  
+3. Default **REDIRECT_URI** is `http://127.0.0.1:8742/oauth2callback` — keep it stable; the same value is sent on the authorize and token steps (Desktop clients do not use a Cloud Console redirect list).  
 4. Leave **CALLBACK_URL_SCHEME** empty for loopback. (Only set a custom URL scheme if you use a non-loopback redirect and register it in `Info.plist`.)
 
 ## Run
